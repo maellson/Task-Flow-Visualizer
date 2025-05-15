@@ -24,7 +24,7 @@ const Dashboard = () => {
         <div className="dashboard-nav">
           <Link to="/processes" className="nav-link">Processos</Link>
           <Link to="/tasks" className="nav-link">Tarefas</Link>
-          {user.user_type === 'project_manager' && (
+          {(user.user_type === 'project_manager' || user.is_superuser) && (
             <>
               <Link to="/approvals" className="nav-link">Aprovações</Link>
               <Link to="/rules" className="nav-link">Regras de Concorrência</Link>
@@ -32,7 +32,7 @@ const Dashboard = () => {
           )}
         </div>
         
-        <div className="dashboard-main">
+        <div className="dashboard-main" style={{ height: '100%', width: '100%' }}>
           <ProcessFlow />
         </div>
       </main>
