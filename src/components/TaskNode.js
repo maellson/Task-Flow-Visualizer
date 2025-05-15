@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
-
+//funcionando aqui
 const getStatusColor = (status) => {
   switch (status) {
     case 'not_started': return '#cbd5e1';  // slate-300
