@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import 'reactflow/dist/style.css';
+import { useMemo } from 'react';
+
+
 import ReactFlow, { 
-  MiniMap, 
-  Controls, 
   Background,
+  MiniMap, 
+  Controls,
   applyEdgeChanges,
   applyNodeChanges
 } from 'reactflow';
@@ -11,12 +15,10 @@ import axios from 'axios';
 import TaskNode from './TaskNode';
 import ConcurrencyPanel from './ConcurrencyPanel';
 
-// Definição do tipo de nó personalizado
-const nodeTypes = {
-  taskNode: TaskNode,
-};
+
 
 const ProcessFlow = () => {
+  const nodeTypes = useMemo(() => ({ taskNode: TaskNode }), []);
   const [processes, setProcesses] = useState([]);
   const [selectedProcessId, setSelectedProcessId] = useState(null);
   const [nodes, setNodes] = useState([]);
@@ -55,32 +57,37 @@ const ProcessFlow = () => {
   // Carregar dados do processo
   useEffect(() => {
     const fetchProcessData = async () => {
-      if (!selectedProcessId) return;
-      
-      try {
-        setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/processes/${selectedProcessId}/flow_data/`);
-        console.log("Dados do fluxo:", response.data); // Adicionar para debug
-        
-        // Garantir que os nós tenham uma posição válida
-        const formattedNodes = response.data.nodes.map(node => ({
-          ...node,
-          position: node.position || { x: Math.random() * 500, y: Math.random() * 500 }
-        }));
-        
-        setNodes(formattedNodes);
-        setEdges(response.data.edges);
-        setConcurrencyRules(response.data.concurrency_rules);
-        setLoading(false);
-      } catch (error) {
-        console.error('Erro ao carregar dados do processo:', error);
-        setError('Erro ao carregar dados do fluxo do processo.');
-        setLoading(false);
-      }
-    };
+    if (!selectedProcessId) return;
 
-    fetchProcessData();
-  }, [selectedProcessId]);
+    try {
+      setLoading(true);
+      const response = await axios.get(`http://localhost:8000/api/processes/${selectedProcessId}/flow_data/`);
+      console.log("Dados do fluxo:", response.data);
+
+      if (!response.data.nodes || response.data.nodes.length === 0) {
+        setError('Nenhum nó encontrado para este processo.');
+        setLoading(false);
+        return;
+      }
+
+      const formattedNodes = response.data.nodes.map(node => ({
+        ...node,
+        position: node.position || { x: Math.random() * 5, y: Math.random() * 10 }
+      }));
+
+      setNodes(formattedNodes);
+      setEdges(response.data.edges || []);
+      setConcurrencyRules(response.data.concurrency_rules || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Erro ao carregar dados do processo:', error);
+      setError('Erro ao carregar dados do fluxo do processo.');
+      setLoading(false);
+    }
+  };
+
+  fetchProcessData();
+}, [selectedProcessId]);
 
   // Manipular seleção de nós
   const onSelectionChange = useCallback(({ nodes }) => {
@@ -165,6 +172,11 @@ const ProcessFlow = () => {
             onSelectionChange={onSelectionChange}
             nodeTypes={nodeTypes}
             fitView
+            fitViewOptions={{
+              padding: 0.5, // Reduz o espaço ao redor dos nós
+              minZoom: 0.5, // Define o zoom mínimo
+              maxZoom: 2.0  // Define o zoom máximo
+            }}
           >
             <Background />
             <Controls />
